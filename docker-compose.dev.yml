@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - PORT=3000
+      - MONGODB_URI=mongodb://mongo:27017/toz-yapi-dev
+      - JWT_SECRET=dev-jwt-secret
+      - JWT_EXPIRE=7d
+      - LOG_LEVEL=debug
+    depends_on:
+      - mongo
+      - redis
+    volumes:
+      - ./src:/app/src:ro
+      - ./logs:/app/logs
+      - ./uploads:/app/uploads
+      - /app/node_modules
+    command: npm run dev
+    restart: unless-stopped
+    networks:
+      - app-network
+
+  mongo:
+    image: mongo:6.0
+    ports:
+      - "27017:27017"
+    environment:
+      - MONGO_INITDB_DATABASE=toz-yapi-dev
+    volumes:
+      - mongo_dev_data:/data/db
+    restart: unless-stopped
+    networks:
+      - app-network
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_dev_data:/data
+    restart: unless-stopped
+    networks:
+      - app-network
+
+volumes:
+  mongo_dev_data:
+  redis_dev_data:
+
+networks:
+  app-network:
+    driver: bridge

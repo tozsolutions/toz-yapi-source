@@ -1,7 +1,13 @@
 import request from 'supertest';
 import express from 'express';
 import { healthRoutes } from '../routes/health';
-import { config } from '../config/config';
+
+// Mock mongoose for testing
+jest.mock('mongoose', () => ({
+  connection: {
+    readyState: 1, // Connected state
+  }
+}));
 
 const app = express();
 app.use('/health', healthRoutes);
@@ -47,11 +53,10 @@ describe('Health Routes', () => {
   describe('GET /health/ready', () => {
     it('should return readiness status', async () => {
       const response = await request(app)
-        .get('/health/ready');
+        .get('/health/ready')
+        .expect(200);
       
-      // Response can be 200 or 503 depending on database connection
-      expect([200, 503]).toContain(response.status);
-      expect(response.body).toHaveProperty('status');
+      expect(response.body.status).toBe('ready');
     });
   });
 });

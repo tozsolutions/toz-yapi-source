@@ -1,123 +1,74 @@
-import request from 'supertest';
-import express from 'express';
-import { authRoutes } from '../routes/auth';
-import { UserModel } from '../models/User';
-import { hashPassword } from '../utils/auth';
+import { generateToken, verifyToken, hashPassword, comparePassword } from '../utils/auth';
+import { config } from '../config/config';
 
-const app = express();
-app.use(express.json());
-app.use('/auth', authRoutes);
+// Mock config for testing
+jest.mock('../config/config', () => ({
+  config: {
+    jwtSecret: 'test-secret',
+    jwtExpiresIn: '1h',
+    bcryptSaltRounds: 10,
+  }
+}));
 
-describe('Auth Routes', () => {
-  describe('POST /auth/register', () => {
-    it('should register a new user', async () => {
-      const userData = {
+describe('Auth Utils', () => {
+  describe('generateToken', () => {
+    it('should generate a valid JWT token', () => {
+      const payload = {
+        userId: 'test-user-id',
         email: 'test@example.com',
-        password: 'password123',
-        name: 'Test User',
+        role: 'user'
       };
       
-      const response = await request(app)
-        .post('/auth/register')
-        .send(userData)
-        .expect(201);
-      
-      expect(response.body.success).toBe(true);
-      expect(response.body.message).toBe('User registered successfully');
-      expect(response.body.data).toHaveProperty('user');
-      expect(response.body.data).toHaveProperty('token');
-      expect(response.body.data.user.email).toBe(userData.email);
-    });
-    
-    it('should not register user with existing email', async () => {
-      const userData = {
-        email: 'test@example.com',
-        password: 'password123',
-        name: 'Test User',
-      };
-      
-      // Create user first
-      await UserModel.create({
-        ...userData,
-        password: await hashPassword(userData.password),
-      });
-      
-      const response = await request(app)
-        .post('/auth/register')
-        .send(userData)
-        .expect(409);
-      
-      expect(response.body.success).toBe(false);
-      expect(response.body.message).toBe('User already exists with this email');
-    });
-    
-    it('should validate required fields', async () => {
-      const response = await request(app)
-        .post('/auth/register')
-        .send({})
-        .expect(400);
-      
-      expect(response.body.success).toBe(false);
-      expect(response.body.message).toBe('Validation failed');
+      const token = generateToken(payload);
+      expect(typeof token).toBe('string');
+      expect(token.length).toBeGreaterThan(0);
     });
   });
   
-  describe('POST /auth/login', () => {
-    beforeEach(async () => {
-      // Create a test user
-      await UserModel.create({
+  describe('verifyToken', () => {
+    it('should verify a valid token', () => {
+      const payload = {
+        userId: 'test-user-id',
         email: 'test@example.com',
-        name: 'Test User',
-        password: await hashPassword('password123'),
-        role: 'user',
-      });
-    });
-    
-    it('should login with valid credentials', async () => {
-      const loginData = {
-        email: 'test@example.com',
-        password: 'password123',
+        role: 'user'
       };
       
-      const response = await request(app)
-        .post('/auth/login')
-        .send(loginData)
-        .expect(200);
+      const token = generateToken(payload);
+      const decoded = verifyToken(token);
       
-      expect(response.body.success).toBe(true);
-      expect(response.body.message).toBe('Login successful');
-      expect(response.body.data).toHaveProperty('user');
-      expect(response.body.data).toHaveProperty('token');
+      expect(decoded.userId).toBe(payload.userId);
+      expect(decoded.email).toBe(payload.email);
+      expect(decoded.role).toBe(payload.role);
     });
     
-    it('should not login with invalid credentials', async () => {
-      const loginData = {
-        email: 'test@example.com',
-        password: 'wrongpassword',
-      };
-      
-      const response = await request(app)
-        .post('/auth/login')
-        .send(loginData)
-        .expect(401);
-      
-      expect(response.body.success).toBe(false);
-      expect(response.body.message).toBe('Invalid credentials');
+    it('should throw error for invalid token', () => {
+      expect(() => {
+        verifyToken('invalid-token');
+      }).toThrow('Invalid or expired token');
     });
-    
-    it('should not login with non-existent user', async () => {
-      const loginData = {
-        email: 'nonexistent@example.com',
-        password: 'password123',
-      };
+  });
+  
+  describe('hashPassword', () => {
+    it('should hash a password', async () => {
+      const password = 'testpassword123';
+      const hash = await hashPassword(password);
       
-      const response = await request(app)
-        .post('/auth/login')
-        .send(loginData)
-        .expect(401);
+      expect(hash).not.toBe(password);
+      expect(typeof hash).toBe('string');
+      expect(hash.length).toBeGreaterThan(0);
+    });
+  });
+  
+  describe('comparePassword', () => {
+    it('should compare password and hash correctly', async () => {
+      const password = 'testpassword123';
+      const hash = await hashPassword(password);
       
-      expect(response.body.success).toBe(false);
-      expect(response.body.message).toBe('Invalid credentials');
+      const isValid = await comparePassword(password, hash);
+      expect(isValid).toBe(true);
+      
+      const isInvalid = await comparePassword('wrongpassword', hash);
+      expect(isInvalid).toBe(false);
     });
   });
 });

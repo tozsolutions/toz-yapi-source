@@ -9,7 +9,6 @@ const config = require('./config/config');
 const logger = require('./utils/logger');
 const errorHandler = require('./middlewares/errorHandler');
 const notFoundHandler = require('./middlewares/notFoundHandler');
-const connectDB = require('./config/database');
 
 // Routes
 const healthRoutes = require('./routes/health');
@@ -20,8 +19,17 @@ const swaggerSetup = require('./config/swagger');
 
 const app = express();
 
-// Connect to database
-connectDB();
+// Connect to database only if not in test environment
+if (process.env.NODE_ENV !== 'test') {
+  const connectDB = require('./config/database');
+  connectDB().catch((err) => {
+    logger.error('Failed to connect to database:', err);
+    // Don't exit in development, just log the error
+    if (process.env.NODE_ENV === 'production') {
+      process.exit(1);
+    }
+  });
+}
 
 // Security middleware
 app.use(helmet());
@@ -100,7 +108,9 @@ process.on('SIGINT', () => {
 // Unhandled promise rejections
 process.on('unhandledRejection', (err) => {
   logger.error('Unhandled Promise Rejection:', err);
-  process.exit(1);
+  if (process.env.NODE_ENV === 'production') {
+    process.exit(1);
+  }
 });
 
 // Uncaught exceptions
@@ -109,15 +119,18 @@ process.on('uncaughtException', (err) => {
   process.exit(1);
 });
 
-const PORT = config.server.port;
-const HOST = config.server.host;
+// Start server only if this file is run directly
+if (require.main === module) {
+  const PORT = config.server.port;
+  const HOST = config.server.host;
 
-app.listen(PORT, HOST, () => {
-  logger.info(`🚀 TOZ YAPI API Server running on http://${HOST}:${PORT}`);
-  logger.info(`📚 Environment: ${config.environment}`);
-  if (config.swagger.enabled) {
-    logger.info(`📖 API Documentation: http://${HOST}:${PORT}/api-docs`);
-  }
-});
+  app.listen(PORT, HOST, () => {
+    logger.info(`🚀 TOZ YAPI API Server running on http://${HOST}:${PORT}`);
+    logger.info(`📚 Environment: ${config.environment}`);
+    if (config.swagger.enabled) {
+      logger.info(`📖 API Documentation: http://${HOST}:${PORT}/api-docs`);
+    }
+  });
+}
 
 module.exports = app;

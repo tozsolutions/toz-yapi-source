@@ -31,7 +31,7 @@ class YapiController {
       const filter: Record<string, unknown> = {};
       
       if (type) {
-        filter.type = type;
+        filter.type = { $eq: type };
       }
       
       if (isActive !== undefined) {

@@ -17,6 +17,12 @@ class AuthController {
     try {
       const { email, password, name, role }: CreateUserData = req.body;
       
+      // Ensure 'email' is a string to prevent NoSQL injection
+      if (typeof email !== 'string') {
+        sendError(res, 'Invalid email format', undefined, 400);
+        return;
+      }
+      
       // Check if user already exists
       const existingUser = await UserModel.findOne({ email });
       if (existingUser) {

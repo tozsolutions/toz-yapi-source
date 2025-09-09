@@ -11,7 +11,7 @@ const userSchema = new Schema<UserDocument>(
       unique: true,
       lowercase: true,
       trim: true,
-      match: [/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/, 'Please provide a valid email'],
+      match: [/^\w+(?:[.-]\w+)*@\w+(?:[.-]\w+)*(\.\w{2,3})+$/, 'Please provide a valid email'],
     },
     name: {
       type: String,

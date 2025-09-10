@@ -1,0 +1,45 @@
+{
+    "name": "Toz Yapı Teknolojileri",
+    "short_name": "TOZ YAPI",
+    "description": "Ankara'nın güvenilir yapı teknolojileri partneri - Panjur, Kepenk, Pergola ve Otomatik Kapı Sistemleri",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#2f3234",
+    "orientation": "portrait-primary",
+    "categories": ["business", "construction", "technology"],
+    "lang": "tr",
+    "dir": "ltr",
+    "icons": [
+        {
+            "src": "/favicon-16x16.png",
+            "sizes": "16x16",
+            "type": "image/png",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "/favicon-32x32.png",
+            "sizes": "32x32",
+            "type": "image/png",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "/apple-touch-icon.png",
+            "sizes": "180x180",
+            "type": "image/png",
+            "purpose": "any maskable"
+        }
+    ],
+    "screenshots": [
+        {
+            "src": "/apple-touch-icon.png",
+            "sizes": "180x180",
+            "type": "image/png",
+            "form_factor": "narrow"
+        }
+    ],
+    "scope": "/",
+    "id": "tozyapi-webapp",
+    "prefer_related_applications": false,
+    "related_applications": []
+}

@@ -1,0 +1,3 @@
+[submodule "sorch"]
+   path = sorch
+   url = <URL for the submodule>
